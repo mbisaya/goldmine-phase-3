@@ -1,0 +1,10 @@
+---
+ranger_ssl_org: su00168725.goldmine.bdo.com.ph
+ranger_ssl_org_unit: BDO Unibank Inc.
+ranger_ssl_city: Makati
+ranger_ssl_state: MM
+ranger_ssl_country: PH
+keypass_ranger: <input password here>
+#ranger_keytool: /usr/lib/jvm/jdk1.8.0_131/bin/keytool
+#ranger_cacert: /usr/lib/jvm/jdk1.8.0_131/jre/lib/security/cacerts
+ranger_ssl_CN: AmihanExistRangerAgent

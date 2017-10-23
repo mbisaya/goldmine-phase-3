@@ -1,0 +1,59 @@
+---
+
+## D. Export ranger-plugin.cer file
+
+- name: Check if ranger-plugin-keystore is existing
+  stat: path=/etc/hbase/conf/ranger-plugin-keystore.jks
+  register: plugin_check
+
+- name: Check if ranger-plugin-keystore is existing in /etc/hadoop/conf
+  stat: path=/etc/hadoop/conf/ranger-plugin-keystore.jks
+  register: plugin2_check
+
+- name: Backup the ranger-plugin-keystore if existing in /etc/hadoop/conf
+  command: mv /etc/hadoop/conf/ranger-plugin-keystore.jks /etc/hadoop/conf/ranger-plugin-keystore.jks.bak
+  when: plugin2_check.stat.exists == true
+
+- name: Backup the ranger-plugin-keystore if existing in /etc/hadoop/conf
+  command: mv /etc/hbase/conf/ranger-plugin-keystore.jks /etc/hbase/conf/ranger-plugin-keystore.jks.bak
+  when: plugin_check.stat.exists == true
+
+
+- name: Generate ranger-plugin-keystore if not existing
+  command: "/usr/lib/jvm/jdk1.8.0_131/bin/keytool -genkey -keyalg RSA -alias rangeradmin -keystore /etc/hbase/conf/ranger-plugin-keystore.jks -storepass {{ keypass_ranger }} -validity 3650 -keysize 2048 -noprompt -dname 'CN={{ ranger_ssl_CN }}, OU={{ ranger_ssl_org_unit }}, O={{ ranger_ssl_org }}, L={{ ranger_ssl_city }}, S={{ ranger_ssl_state }}, C={{ ranger_ssl_country }}' -keypass {{ keypass_ranger }}"
+#  when: plugin_check.stat.exists == false
+
+- name: Copy ranger-plugin keystore
+  copy:
+    remote_src: true
+    src: /etc/hbase/conf/ranger-plugin-keystore.jks
+    dest: /etc/hadoop/conf/ranger-plugin-keystore.jks
+#  when: plugin_check.stat.exists == true
+
+- name: Export ranger-plugin-keystore.jks
+  command: "/usr/lib/jvm/jdk1.8.0_131/bin/keytool -export -keystore /etc/hbase/conf/ranger-plugin-keystore.jks -alias rangeradmin -file /etc/hadoop/conf/ranger-agent-trust.cer"
+  #-noprompt -keypass {{ keypass_ranger }}
+  when: plugin2_check.stat.exists == false
+#  when: inventory_hostname in groups['ranger_plugin']
+
+- name: Check if ranger-agent-trust is already existing
+  command: sudo -u hdfs hdfs dfs -stat /user/ranger/ranger-agent-trust.cer
+  register: agent_check
+  ignore_errors: yes
+
+- name: Check if ranger-agent-trust backup is already existing
+  command: sudo -u hdfs hdfs dfs -stat /user/ranger/ranger-agent-trust.cer.bak
+  register: agent_backup
+  ignore_errors: yes
+
+- name: Remove backup if existing
+  command: sudo -u hdfs hdfs dfs -rm /user/ranger/ranger-agent-trust.cer.bak
+  when: agent_backup|succeeded
+
+- name: Backup the ranger-agent-trust if existing
+  command: sudo -u hdfs hdfs dfs -mv /user/ranger/ranger-agent-trust.cer /user/ranger/ranger-agent-trust.cer.bak
+  when: agent_check|succeeded
+
+- name: Copy ranger-agent-trust.cer to the Ranger Admin Server.
+#  become_user: root
+  command: sudo -u hdfs hdfs dfs -put /etc/hadoop/conf/ranger-agent-trust.cer /user/ranger/ranger-agent-trust.cer

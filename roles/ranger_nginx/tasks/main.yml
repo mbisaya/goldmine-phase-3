@@ -1,0 +1,6 @@
+---
+- name: Copy nginx tcp-ranger-loadbalancer.conf
+  template:
+    src: tcp-ranger-loadbalancer.conf
+    dest: /etc/nginx/tcpconf.d/tcp-ranger-loadbalancer.conf
+  notify: restart nginx

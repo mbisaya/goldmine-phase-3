@@ -1,0 +1,63 @@
+[all]
+su00168725    ansible_host=10.50.44.129
+su00168726    ansible_host=10.50.44.130
+su00168727    ansible_host=10.50.44.131
+su00168728    ansible_host=10.50.44.132
+su00168729    ansible_host=10.50.44.133
+su00168730    ansible_host=10.50.44.134
+su00168697    ansible_host=10.50.44.135
+su00168698    ansible_host=10.50.44.136
+su00168699    ansible_host=10.50.44.137
+su00168700    ansible_host=10.50.44.138
+su00168701    ansible_host=10.50.44.139
+su00168702    ansible_host=10.50.44.140
+su00168703    ansible_host=10.50.44.141
+su00168704    ansible_host=10.50.44.142
+su00168705    ansible_host=10.50.44.143
+su00168706    ansible_host=10.50.44.144
+su00168707    ansible_host=10.50.44.145
+su00168708    ansible_host=10.50.44.146
+su00168709    ansible_host=10.50.44.147
+su00168710    ansible_host=10.50.44.148
+
+
+[ranger_hosts]
+su00168725    ansible_host=10.50.44.129
+su00168729    ansible_host=10.50.44.133
+
+
+[ranger_admin]
+su00168725    ansible_host=10.50.44.129
+
+[ranger_plugin]
+su00168729    ansible_host=10.50.44.133
+
+
+[master-nodes]
+su00168725    ansible_host=10.50.44.129
+su00168726    ansible_host=10.50.44.130
+su00168727    ansible_host=10.50.44.131
+su00168728    ansible_host=10.50.44.132
+su00168729    ansible_host=10.50.44.133
+su00168730    ansible_host=10.50.44.134
+
+
+[worker-nodes]
+su00168697    ansible_host=10.50.44.135
+su00168698    ansible_host=10.50.44.136
+su00168699    ansible_host=10.50.44.137
+su00168700    ansible_host=10.50.44.138
+su00168701    ansible_host=10.50.44.139
+su00168702    ansible_host=10.50.44.140
+su00168703    ansible_host=10.50.44.141
+su00168704    ansible_host=10.50.44.142
+su00168705    ansible_host=10.50.44.143
+su00168706    ansible_host=10.50.44.144
+su00168707    ansible_host=10.50.44.145
+su00168708    ansible_host=10.50.44.146
+su00168709    ansible_host=10.50.44.147
+su00168710    ansible_host=10.50.44.148
+
+
+[app02]
+su00168726    ansible_host=10.50.44.130

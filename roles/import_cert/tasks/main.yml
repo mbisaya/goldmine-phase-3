@@ -1,0 +1,45 @@
+---
+
+## E. Import the ranger-agent-trust.cer
+
+- name: Check if ranger-agent-trust is existing in /tmp
+  stat: path=/tmp/ranger-agent-trust.cer
+  register: agent_trust_check
+
+- name: Remove existing file in /tmp
+  command: rm -rf /tmp/ranger-agent-trust.cer
+  when: agent_trust_check.stat.exists == true
+
+- name: Copy ranger-agent-trust from HDFS
+#  become_user: root
+  command: sudo -u hdfs hdfs dfs -get /user/ranger/ranger-agent-trust.cer /tmp
+
+- name: Transfer ranger-agent-trust.cer to /etc/ranger/admin/conf/
+  command: mv /tmp/ranger-agent-trust.cer /etc/ranger/admin/conf/ranger-agent-trust.cer
+
+- name: Check if alias is existing in cacerts
+  command: "/usr/lib/jvm/jdk1.8.0_131/bin/keytool -list -alias rangeradmin -keystore /usr/lib/jvm/jdk1.8.0_131/jre/lib/security/cacerts -storepass changeit"
+  register: cacert_check
+  ignore_errors: yes
+
+- name: Delete alias if existing
+  command: "/usr/lib/jvm/jdk1.8.0_131/bin/keytool -delete -alias rangeradmin -keystore /usr/lib/jvm/jdk1.8.0_131/jre/lib/security/cacerts -storepass changeit"
+  when: cacert_check|succeeded
+
+- name: Import ranger-agent-trust.cer
+  command: "/usr/lib/jvm/jdk1.8.0_131/bin/keytool -import -file /etc/ranger/admin/conf/ranger-agent-trust.cer -alias rangeradmin -keystore /usr/lib/jvm/jdk1.8.0_131/jre/lib/security/cacerts -storepass changeit -noprompt"
+
+
+- name: Change ownership of keystore
+  file:
+    path: /etc/ranger/admin/conf/ranger-admin-keystore.jks
+    owner: ranger
+    group: ranger
+    mode: 0400
+
+- name: Change ownership of truststore
+  file:
+    path: /etc/ranger/admin/conf/ranger-admin-truststore.jks
+    owner: ranger
+    group: ranger
+    mode: 0400

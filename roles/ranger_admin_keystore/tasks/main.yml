@@ -1,0 +1,100 @@
+---
+## P R E R E Q U I S I T E
+
+- name: Check if Ranger Admin Keystore exists
+  stat: path=/etc/ranger/admin/conf/ranger-admin-keystore.jks
+  register: keystore
+
+- name: Backup ranger-admin-keystore  file
+  command: mv /etc/ranger/admin/conf/ranger-admin-keystore .jks /etc/ranger/admin/conf/ranger-admin-truststore.jks.bak
+  when: keystore.stat.exists == True
+
+- name: Check if Ranger Admin Truststore exists
+  stat: path=/etc/ranger/admin/conf/ranger-admin-truststore.jks
+  register: truststore
+
+- name: Backup ranger-admin-truststore  file
+  command: mv /etc/ranger/admin/conf/ranger-admin-truststore.jks /etc/ranger/admin/conf/ranger-admin-truststore.jks.bak
+  when: truststore.stat.exists == True
+
+## A. Create Ranger Admin Keystore#
+- name: Generate ranger admin keystore
+  command: /usr/lib/jvm/jdk1.8.0_131/bin/keytool -genkey -keyalg RSA -alias rangeradmin -keystore /etc/ranger/admin/conf/ranger-admin-keystore.jks -storepass {{ keypass_ranger }} -validity 3650 -keysize 2048 -noprompt -dname 'CN={{ ranger_ssl_CN }}, OU={{ ranger_ssl_org_unit }}, O={{ ranger_ssl_org }}, L={{ ranger_ssl_city }}, S={{ ranger_ssl_state }}, C={{ ranger_ssl_country }}' -keypass {{ keypass_ranger }}
+
+- name: Copy keystore to /etc/hadoop/conf
+  copy:
+    remote_src: true
+    src: /etc/ranger/admin/conf/ranger-admin-keystore .jks
+    dest: /etc/hadoop/conf/ranger-admin-keystore.jks
+
+## B. Export ranger-admin-keystore#
+- name: Export ranger admin keystore to a .cer file
+  command: /usr/lib/jvm/jdk1.8.0_131/bin/keytool -export -keystore /etc/hadoop/conf/ranger-admin-keystore.jks -alias rangeradmin -file /etc/ranger/admin/conf/ranger-admin.cer -noprompt -keypass {{ keypass_ranger }}
+
+## C. Create truststore file from ranger-admin.cer
+- name: Create truststore file
+  command: /usr/lib/jvm/jdk1.8.0_131/bin/keytool -import -file /etc/ranger/admin/conf/ranger-admin.cer -alias rangeradmin -keystore /etc/ranger/admin/conf/ranger-admin-truststore.jks -storepass {{ keypass_ranger }} -noprompt
+
+- name: Copy truststore to /etc/hadoop/conf
+  copy:
+    remote_src: true
+    src: /etc/ranger/admin/conf/ranger-admin-keystore.jks
+    dest: /etc/hadoop/conf/ranger-admin-keystore.jks
+# Copy the cert file to all servers
+# backup the KEYSTORE if existing
+
+- name: Check if keystore is already existing
+  command: sudo -u hdfs hdfs dfs -stat /user/ranger/ranger-admin-keystore.jks
+  register: keystore_check
+  ignore_errors: yes
+
+- name: Check if keystore backup is already existing
+  command: sudo -u hdfs hdfs dfs -stat /user/ranger/ranger-admin-keystore.jks.bak
+  register: keystore_backup
+  ignore_errors: yes
+
+- name: Remove backup if existing
+  command: sudo -u hdfs hdfs dfs -rm /user/ranger/ranger-admin-keystore.jks.bak
+  when: keystore_backup|succeeded
+
+- name: Backup the keystore if existing
+  command: sudo -u hdfs hdfs dfs -mv /user/ranger/ranger-admin-keystore.jks /user/ranger/ranger-admin-keystore.jks.bak
+  when: keystore_check|succeeded
+
+## Copy KEYTORE TO HDFS
+
+- name: Copy ranger-admin-keystore  to HDFS
+#  become_user: root
+  command: sudo -u hdfs hdfs dfs -put ranger-admin-keystore .jks /user/ranger/ranger-admin-keystore.jks
+  args:
+    chdir: /etc/ranger/admin/conf
+
+## backup the TRUSSTORE if existing
+
+- name: Check if truststore is already existing
+  command: sudo -u hdfs hdfs dfs -stat /user/ranger/ranger-admin-truststore.jks
+  register: truststore_check
+  ignore_errors: yes
+
+- name: Check if truststore backup is already existing
+  command: sudo -u hdfs hdfs dfs -stat /user/ranger/ranger-admin-truststore.jks.bak
+  register: truststore_backup
+  ignore_errors: yes
+
+- name: Remove backup if existing
+  command: sudo -u hdfs hdfs dfs -rm /user/ranger/ranger-admin-truststore.jks.bak
+  when: truststore_backup|succeeded
+
+- name: Backup the truststore if existing
+  command: sudo -u hdfs hdfs dfs -mv /user/ranger/ranger-admin-truststore.jks /user/ranger/ranger-admin-truststore.jks.bak
+  when: truststore_check|succeeded
+
+
+# Copy TRUSTSTORE TO HDFS
+
+- name: Copy ranger-admin-keystore  to HDFS
+#  become_user: root
+  command: sudo -u hdfs hdfs dfs -put ranger-admin-truststore.jks /user/ranger/ranger-admin-truststore.jks
+  args:
+    chdir: /etc/ranger/admin/conf
+#  when: keystore_check|skipped

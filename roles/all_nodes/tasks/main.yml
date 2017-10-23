@@ -1,0 +1,42 @@
+---
+
+## F. Copy keystore and truststore to ALL nodes
+
+- name: Check if ranger-admin-truststore  is existing in /tmp
+  stat: path=/tmp/ranger-admin-truststore.jks
+  register: truststore_check
+
+- name: Remove existing ranger-admin-truststore  in /tmp
+  command: rm -rf /tmp/ranger-admin-truststore.jks
+  when: truststore_check.stat.exists == true
+
+- name: Check if ranger-admin-keystore  is existing in /tmp
+  stat: path=/tmp/ranger-admin-keystore.jks
+  register: keystore_check
+
+- name: Remove existing ranger-admin-keystore  in /tmp
+  command: rm -rf /tmp/ranger-admin-keystore.jks
+  when: keystore_check.stat.exists == true
+
+- name: Copy ranger-agent-trust from HDFS
+#  become_user: root
+  command: sudo -u hdfs hdfs dfs -get {{ item.src }} /tmp
+  with_items:
+    - { src: "/user/ranger/ranger-admin-truststore.jks" }
+    - { src: "/user/ranger/ranger-admin-keystore.jks" }
+
+- name: Move to /etc/hadoop/conf
+  copy: src={{ item.src }}
+        dest={{ item.dest }}
+        remote_src=true
+  with_items:
+    - { src: "/tmp/ranger-admin-truststore.jks", dest: "/etc/hadoop/conf/ranger-admin-truststore.jks" }
+    - { src: "/tmp/ranger-admin-keystore.jks", dest: "/etc/hadoop/conf/ranger-admin-keystore.jks"}
+
+- name: Change ownership of cert directory
+  file: dest={{ item.src }}
+        owner=ranger
+        group=ranger
+  with_items:
+    - { src: "/etc/hadoop/conf/ranger-admin-truststore.jks" }
+    - { src: "/etc/hadoop/conf/ranger-admin-keystore.jks" }
